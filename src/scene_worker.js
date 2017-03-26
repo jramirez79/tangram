@@ -224,26 +224,25 @@ Object.assign(self, {
     // Query features within visible tiles, with optional filter conditions
     queryFeatures ({ filter, tile_keys }) {
         let features = [];
-        let tiles = tile_keys.map(t => self.tiles[t]).filter(t => t);
 
         filter = Utils.stringsToFunctions(filter, StyleParser.wrapFunction);
         filter = buildFilter(filter, FilterOptions);
 
-        tiles.forEach(tile => {
-            for (let layer in tile.source_data.layers) {
-                let data = tile.source_data.layers[layer];
-                data.features.forEach(feature => {
-                    let context = StyleParser.getFeatureParseContext(feature, tile, self.global);
-                    context.source = tile.source;  // add data source name
-                    context.layer = layer;         // add data source layer name
+        tile_keys.forEach(tile_key => {
+            let entries = FeatureSelection.entriesForTile(tile_key);
+            entries.forEach(entry => {
+                let feature = entry.feature;
+                let context = StyleParser.getFeatureParseContext(feature, feature.tile, self.global);
+                context.geometry = feature.geometry_type; // add context props for filter compatibility
+                context.source = feature.source_name;
+                context.layer = feature.source_layer;
 
-                    if (!filter(context)) {
-                       return;
-                    }
+                if (!filter(context)) {
+                   return;
+                }
 
-                    features.push(feature);
-                });
-            }
+                features.push(feature);
+            });
         });
         return features;
     },

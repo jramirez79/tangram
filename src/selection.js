@@ -1,5 +1,6 @@
 import log from './utils/log';
 import Texture from './gl/texture';
+import Geo from './geo';
 import WorkerBroker from './utils/worker_broker';
 
 export default class FeatureSelection {
@@ -224,6 +225,9 @@ export default class FeatureSelection {
                     key: tile.key,
                     coords: tile.coords,
                     style_zoom: tile.style_zoom,
+                    meters_per_pixel: tile.meters_per_pixel,
+                    meters_per_pixel_sq: tile.meters_per_pixel_sq,
+                    units_per_meter_overzoom: tile.units_per_meter_overzoom,
                     source: tile.source,
                     generation: tile.generation
                 }
@@ -240,6 +244,7 @@ export default class FeatureSelection {
         selector.feature = {
             id: feature.id,
             properties: feature.properties,
+            geometry_type: Geo.geometryType(feature.geometry.type),
             source_name: context.source,
             source_layer: context.layer,
             layers: context.layers,
@@ -262,6 +267,13 @@ export default class FeatureSelection {
             this.map_size -= this.tiles[key].entries.length;
             delete this.tiles[key];
         }
+    }
+
+    static entriesForTile(key) {
+        if (this.tiles[key]) {
+            return this.tiles[key].entries.map(k => this.map[k]);
+        }
+        return [];
     }
 
     static getMapSize() {
