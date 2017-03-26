@@ -5,6 +5,7 @@ uniform vec4 u_tile_origin;
 uniform float u_tile_proxy_depth;
 uniform float u_meters_per_pixel;
 uniform float u_device_pixel_ratio;
+uniform bool u_outline_pass;
 
 uniform mat4 u_model;
 uniform mat4 u_modelView;
@@ -28,6 +29,7 @@ attribute vec4 a_color;
     // z:  half-width of line (amount to extrude)
     // w:  scaling factor for interpolating width between zooms
     attribute vec4 a_extrude;
+    attribute vec4 a_extrude_outline;
 #endif
 
 varying vec4 v_position;
@@ -78,8 +80,19 @@ void main() {
 
     #ifdef TANGRAM_EXTRUDE_LINES
         vec2 extrude = a_extrude.xy / 256.; // values have an 8-bit fraction
-        float width = a_extrude.z;
-        float dwdz = a_extrude.w;
+        float width, dwdz;
+        if (!u_outline_pass) {
+            width = a_extrude.z;
+            dwdz = a_extrude.w;
+        }
+        else {
+            if (a_extrude_outline[0] == 0.) {
+                gl_Position = vec4(0., 0., 0., 1.);
+                return;
+            }
+            width = a_extrude_outline[1];
+            dwdz = a_extrude_outline[2];
+        }
 
         // Adjust line width based on zoom level, to prevent proxied lines from being either too small or too big.
         // "Flattens" the zoom between 1-2 to peg it to 1 (keeps lines from prematurely shrinking), then interpolate
@@ -113,6 +126,9 @@ void main() {
     v_position = position;
     v_normal = normalize(u_normalMatrix * TANGRAM_NORMAL);
     v_color = a_color;
+    if (u_outline_pass) {
+        v_color = vec4(1., 0., 0., 1.);
+    }
 
     #if defined(TANGRAM_LIGHTING_VERTEX)
         // Vertex lighting
@@ -129,7 +145,18 @@ void main() {
     cameraProjection(position);
 
     // +1 is to keep all layers including proxies > 0
-    applyLayerOrder(a_position.w + u_tile_proxy_depth + 1., position);
+    float order;
+    #ifdef TANGRAM_EXTRUDE_LINES
+        if (!u_outline_pass) {
+            order = a_position.w;
+        }
+        else {
+            order = a_extrude_outline[3];
+        }
+    #else
+        order = a_position.w;
+    #endif
+    applyLayerOrder(order + u_tile_proxy_depth + 1., position);
 
     gl_Position = position;
 }

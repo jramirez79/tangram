@@ -5,6 +5,7 @@ import {StyleParser} from '../style_parser';
 import gl from '../../gl/constants'; // web workers don't have access to GL context, so import all GL constants
 import Texture from '../../gl/texture';
 import VertexLayout from '../../gl/vertex_layout';
+import ShaderProgram from '../../gl/shader_program';
 import {buildPolylines} from '../../builders/polylines';
 import renderDashArray from './dasharray';
 import Geo from '../../geo';
@@ -26,6 +27,7 @@ Object.assign(Lines, {
         var attribs = [
             { name: 'a_position', size: 4, type: gl.SHORT, normalized: false },
             { name: 'a_extrude', size: 4, type: gl.SHORT, normalized: false },
+            { name: 'a_extrude_outline', size: 4, type: gl.SHORT, normalized: false },
             { name: 'a_color', size: 4, type: gl.UNSIGNED_BYTE, normalized: true }
         ];
 
@@ -63,6 +65,8 @@ Object.assign(Lines, {
         // inline properties (outline call is made *within* the inline call)
         this.outline_feature_style = {};
         this.inline_feature_style = this.feature_style; // save reference to main computed style object
+
+        // this.outline_pass = true;
     },
 
     // Override
@@ -71,6 +75,14 @@ Object.assign(Lines, {
             this.parseLineTexture();
         }
         return Style.compileSetup.apply(this, arguments);
+    },
+
+    // Override
+    render (mesh) {
+        ShaderProgram.current.uniform('1i', 'u_outline_pass', false);
+        let next = mesh.render();
+        ShaderProgram.current.uniform('1i', 'u_outline_pass', true);
+        return mesh.render() || next;
     },
 
     // Optionally apply a dash array pattern to this line
@@ -193,14 +205,24 @@ Object.assign(Lines, {
 
             if ((outline_width === 0 && outline_next_width === 0) || outline_width < 0 || outline_next_width < 0) {
                 // skip lines that don't interpolate between zero or greater width
-                style.outline.width.value = null;
-                style.outline.next_width.value = null;
+                // style.outline.width.value = null;
+                // style.outline.next_width.value = null;
+                style.outline.width = null;
+                style.outline.next_width = null;
+
                 style.outline.color = null;
             }
             else {
                 // Maintain consistent outline width around the line fill
-                style.outline.width.value = outline_width + width;
-                style.outline.next_width.value = outline_next_width + next_width;
+                // style.outline.width.value = outline_width + width;
+                // style.outline.next_width.value = outline_next_width + next_width;
+
+                outline_width += width;
+                outline_next_width += width;
+                style.outline.width = outline_width * context.units_per_meter_overzoom;
+                style.outline.next_width = (outline_next_width * 2) - outline_width;
+                style.outline.next_width *= context.units_per_meter_overzoom;
+                style.outline.next_width /= 2; // NB: divide by 2 because extrusion width is halved in builder - remove?
 
                 style.outline.color = draw.outline.color;
                 style.outline.cap = draw.outline.cap || draw.cap;
@@ -226,8 +248,11 @@ Object.assign(Lines, {
             }
         }
         else {
-            style.outline.width.value = null;
-            style.outline.next_width.value = null;
+            // style.outline.width.value = null;
+            // style.outline.next_width.value = null;
+            style.outline.width = null;
+            style.outline.next_width = null;
+
             style.outline.color = null;
         }
 
@@ -271,6 +296,12 @@ Object.assign(Lines, {
         // scaling to previous and next zoom
         this.vertex_template[i++] = style.next_width;
 
+        // outline extrusion vector
+        this.vertex_template[i++] = (style.outline && style.outline.color != null && style.outline.width != null); // has outline flag
+        this.vertex_template[i++] = 0;                          // width
+        this.vertex_template[i++] = style.outline.next_width;   // width scaling
+        this.vertex_template[i++] = this.scaleOrder(style.outline.order);        // order
+
         // color
         this.vertex_template[i++] = style.color[0] * 255;
         this.vertex_template[i++] = style.color[1] * 255;
@@ -296,13 +327,13 @@ Object.assign(Lines, {
 
     buildLines(lines, style, vertex_data, context, options) {
         // Outline (build first so that blended geometry without a depth test is drawn first/under the inner line)
-        this.feature_style = this.outline_feature_style; // swap in outline-specific style holder
-        if (style.outline && style.outline.color != null && style.outline.width.value != null) {
-            var outline_style = this.styles[style.outline.style];
-            if (outline_style) {
-                outline_style.addFeature(context.feature, style.outline, context);
-            }
-        }
+        // this.feature_style = this.outline_feature_style; // swap in outline-specific style holder
+        // if (style.outline && style.outline.color != null && style.outline.width.value != null) {
+        //     var outline_style = this.styles[style.outline.style];
+        //     if (outline_style) {
+        //         outline_style.addFeature(context.feature, style.outline, context);
+        //     }
+        // }
 
         // Main line
         this.feature_style = this.inline_feature_style; // restore calculated style for inline
@@ -313,6 +344,9 @@ Object.assign(Lines, {
             vertex_data,
             vertex_template,
             {
+                // outline_width: style.width * 1.2, //(style.outline && style.outline.color && style.outline.width.value),
+                outline_width: (style.outline && style.outline.color && style.outline.width),
+                outline_width_index: this.vertex_layout.index.a_extrude_outline + 1,
                 cap: style.cap,
                 join: style.join,
                 miter_limit: style.miter_limit,

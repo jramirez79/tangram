@@ -42,7 +42,9 @@ export function buildPolylines (lines, width, vertex_data, vertex_template,
         scaling_index,
         scaling_normalize,
         join, cap,
-        miter_limit
+        miter_limit,
+        outline_width,
+        outline_width_index
     }) {
 
     var cap_type = cap ? CAP_TYPE[cap] : CAP_TYPE.butt;
@@ -73,6 +75,8 @@ export function buildPolylines (lines, width, vertex_data, vertex_template,
         vertex_data,
         vertex_template,
         half_width: width / 2,
+        outline_half_width: outline_width / 2,
+        outline_width_index,
         scaling_index,
         scaling_normalize,
         v_scale,
@@ -436,6 +440,10 @@ function buildVertexTemplate (vertex_template, vertex, texture_coord, scale, con
         vertex_template[context.scaling_index + 0] = scale[0] * context.scaling_normalize;
         vertex_template[context.scaling_index + 1] = scale[1] * context.scaling_normalize;
         vertex_template[context.scaling_index + 2] = context.half_width;
+
+        if (context.outline_width_index) {
+            vertex_template[context.outline_width_index] = context.outline_half_width;
+        }
     }
 }
 
