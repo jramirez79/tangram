@@ -1,7 +1,7 @@
 ﻿scene:
     animated: true
     background:
-        color: grey
+        color: '#ccc'
 
 sources:
     mapzen:
@@ -15,43 +15,55 @@ sources:
         url: test.json
 
 styles:
-    line:
+    whiteline:
         base: lines
+        texcoords: true
         blend: overlay
+
+    uvlines:
+        base: lines
+        texcoords: true
+        blend: overlay
+        # shaders:
+        #     blocks:
+        #         color: |
+        #             color.rgb = vec3(v_texcoord.x, fract(v_texcoord.y/2.), 0.);
+
 layers:
 
     earth:
         data: { source: mapzen }
         draw:
             polygons:
-                color: #333
+                color: '#999'
                 order: 0
 
     test:
         data: { source: test, layer: _default }
         # filter: { not: { kind: rail } }
         draw:
-            line:
-                color: [1, 1, 1, .333]
-                width: 50px
+            whiteline:
+                color: [1, 1, 1, .45]
+                # color: white
+                width: 100px
                 order: 2
-                cap: butt
+                cap: round
                 join: round
                 outline:
                     color: black
                     width: 2px
-                order: 1
+                    order: 1
 
     roads:
         data: { source: mapzen }
         # filter: { not: { kind: rail } }
         draw:
-            line:
+            uvlines:
                 # color: [1, 1, 1, .333]
                 color: white
                 width: 10px
                 order: 10
-                cap: butt
+                cap: round
                 join: round
                 outline:
                     color: black
