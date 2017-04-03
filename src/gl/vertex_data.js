@@ -41,6 +41,7 @@ export default class VertexData {
         this.vertex_count = 0;
         this.realloc_count = 0;
         this.setBufferViews();
+        this.setAddVertexFunction();
     }
 
     // (Re-)allocate typed views into the main buffer - only create the types we need for this layout
@@ -80,22 +81,14 @@ export default class VertexData {
         }
     }
 
-    // Add a vertex, copied from a plain JS array of elements matching the order of the vertex layout.
-    // Note: uses pre-calculated info about each attribute, including pointer to appropriate typed array
-    // view and offset into it. This was the fastest method profiled so far for filling a mixed-type
-    // vertex layout (though still slower than the previous method that only supported Float32Array attributes).
+    // Initialize the add vertex function (lazily compiled by vertex layout)
+    setAddVertexFunction () {
+        this.vertexLayoutAddVertex = this.vertex_layout.getAddVertexFunction();
+    }
+
+    // Add a vertex, copied from a plain JS array of elements matching the order of the vertex layout
     addVertex (vertex) {
-        this.checkBufferSize();
-        var i=0;
-
-        var clen = this.components.length;
-        for (var c=0; c < clen; c++) {
-            var component = this.components[c];
-            component[1][(this.offset >> component[2]) + component[3]] = vertex[i++];
-        }
-
-        this.offset += this.vertex_layout.stride;
-        this.vertex_count++;
+        this.vertexLayoutAddVertex(vertex, this);
     }
 
     // Finalize vertex buffer for use in constructing a mesh

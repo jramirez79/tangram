@@ -1,5 +1,6 @@
 import gl from './constants'; // web workers don't have access to GL context, so import all GL constants
 import VertexData from './vertex_data';
+import hashString from '../utils/hash';
 
 // Describes a vertex layout that can be used with many different GL programs.
 export default class VertexLayout {
@@ -13,7 +14,7 @@ export default class VertexLayout {
         // Calc vertex stride
         this.stride = 0;
 
-        var count = 0;
+        var index = 0, count = 0;
         for (let a=0; a < this.attribs.length; a++) {
             let attrib = this.attribs[a];
             attrib.offset = this.stride;
@@ -47,16 +48,16 @@ export default class VertexLayout {
             var offset_typed = attrib.offset >> shift;
             if (attrib.size > 1) {
                 for (let s=0; s < attrib.size; s++) {
-                    this.components.push([attrib.type, null, shift, offset_typed++]);
+                    this.components.push([attrib.type, null, shift, offset_typed++, count++]);
                 }
             }
             else {
-                this.components.push([attrib.type, null, shift, offset_typed]);
+                this.components.push([attrib.type, null, shift, offset_typed, count++]);
             }
 
             // Provide an index into the vertex data buffer for each attribute component
-            this.index[attrib.name] = count;
-            count += attrib.size;
+            this.index[attrib.name] = index;
+            index += attrib.size;
         }
     }
 
@@ -101,8 +102,56 @@ export default class VertexLayout {
         return new VertexData(this);
     }
 
+    // Lazily create the add vertex function
+    getAddVertexFunction () {
+        if (this.addVertex == null) {
+            this.createAddVertexFunction();
+        }
+        return this.addVertex;
+    }
+
+    // Dynamically compile a function to add a plain JS vertex array to this layout's typed VBO arrays
+    createAddVertexFunction () {
+        let key = hashString(JSON.stringify(this.attribs));
+        if (VertexLayout.add_vertex_funcs[key] == null) {
+            let src = `
+                vertex_data.checkBufferSize();
+                var view, offset;`;
+
+            let last_type, i=0;
+            let components = [...this.components];
+            components.sort((a, b) => (a[0] !== b[0]) ? (a[0] - b[0]) : (a[4] - b[4]));
+
+            for (let c=0; c < components.length; c++) {
+                let component = components[c];
+
+                if (last_type !== component[0]) {
+                    src += `
+                        view = vertex_data.views[${component[0]}];
+                        offset = vertex_data.offset${component[2] ? ' >> ' + component[2] : ''};
+                    `;
+                    last_type = component[0];
+                }
+
+                src += `view[offset + ${component[3]}] = vertex[${component[4]}];\n`;
+            }
+
+            src += `
+                vertex_data.offset += vertex_data.vertex_layout.stride;
+                vertex_data.vertex_count++;`;
+
+            let func = new Function('vertex', 'vertex_data', src);
+            VertexLayout.add_vertex_funcs[key] = func; //function vertexLayoutAddVertex(vertex, vertex_data) { func(vertex, vertex_data); };
+        }
+
+        this.addVertex = VertexLayout.add_vertex_funcs[key];
+    }
+
 }
 
 // Track currently enabled attribs, by the program they are bound to
 // Static class property to reflect global GL state
 VertexLayout.enabled_attribs = {};
+
+// Functions to add plain JS vertex array to typed VBO arrays
+VertexLayout.add_vertex_funcs = {}; // keyed by unique set of attributes
