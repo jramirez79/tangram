@@ -48,7 +48,7 @@ layers:
                 width: 50px
                 order: 2
                 cap: square
-                join: round
+                join: bevel
                 # outline:
                 #     color: black
                 #     width: 2px
@@ -64,4 +64,4 @@ layers:
                 width: 50px
                 order: 2
                 cap: square
-                join: round
+                join: bevel
