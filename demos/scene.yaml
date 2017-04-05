@@ -47,7 +47,7 @@ layers:
                 # color: white
                 width: 50px
                 order: 2
-                cap: round
+                cap: square
                 join: round
                 # outline:
                 #     color: black
@@ -63,5 +63,5 @@ layers:
                 # color: white
                 width: 50px
                 order: 2
-                cap: round
+                cap: square
                 join: round
