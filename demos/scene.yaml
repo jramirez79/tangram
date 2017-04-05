@@ -12,7 +12,7 @@ sources:
         max_zoom: 16
     test:
         type: GeoJSON
-        url: test.json
+        url: test2.json
 
 styles:
     whiteline:
@@ -45,7 +45,7 @@ layers:
             whiteline:
                 color: [1, 0, 1, .3]
                 # color: white
-                width: 100px
+                width: 50px
                 order: 2
                 cap: round
                 join: round
@@ -58,14 +58,10 @@ layers:
         data: { source: mapzen }
         # filter: { not: { kind: rail } }
         draw:
-            uvlines:
-                # color: [1, 1, 1, .333]
-                color: white
-                width: 10px
-                order: 10
+            whiteline:
+                color: [1, 1, 1, .3]
+                # color: white
+                width: 50px
+                order: 2
                 cap: round
                 join: round
-                # outline:
-                #     color: black
-                #     width: 2px
-                #     order: 1

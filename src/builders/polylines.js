@@ -133,8 +133,6 @@ function buildPolyline(line, context, extra_lines){
     }
 
     normNext = Vector.normalize(Vector.perp(coordCurr, coordNext))
-    // set default isCap value to 0
-    normNext[2] = 0.;
 
     // Skip tile boundary lines and append a new line if needed
     if (remove_tile_edges && outsideTile(coordCurr, coordNext, tile_edge_tolerance)) {
@@ -158,6 +156,9 @@ function buildPolyline(line, context, extra_lines){
                 v += 0.5 * v_scale * context.texcoord_width;
             }
         }
+
+        // reset default isCap value to 0
+        normNext[2] = 0.;
 
         // Add first pair of points for the line strip
         addVertex(coordCurr, normNext, normNext, [1, v], context);
@@ -474,18 +475,15 @@ function addFan (coord, eA, eC, eB, normal, uvA, uvC, uvB, isCap, context) {
         angle -= 2*Math.PI;
     }
 
+    // vary number of triangles in fan with angle (based on MIN_FAN_WIDTH)
     var numTriangles = trianglesPerArc(angle, context.half_width);
     if (numTriangles < 1) {
         return;
     }
-    // numTriangles = 1;
+    // numTriangles = 1; // testing
 
     var pivotIndex = context.vertex_data.vertex_count;
     var vertex_elements = context.vertex_data.vertex_elements;
-
-    // set isCap flag at normal z coordinate
-    normal[2] = isCap ? 1. : 0.;
-    // normal[2] = 0.;
 
     if (angle < 0) { // cw
         addVertex(coord, eC, normal, uvC, context);
@@ -513,6 +511,7 @@ function addFan (coord, eA, eC, eB, normal, uvA, uvC, uvB, isCap, context) {
 
     for (var i = 0; i < numTriangles; i++) {
         if (i == 0 && angle < 0) {
+            // if ccw, spin the extrusion vector around so offsets work properly
             blade = Vector.rot(blade, 180* Math.PI/180);            
         }
 
@@ -571,9 +570,8 @@ function addBevel (coord, nA, nC, nB, uA, uC, uB, context) {
 //  because to re-use the buffers they need to be at the end
 function addCap (coord, v, normal, type, isBeginning, context) {
     // set isCap flag
-    normal[2] = 1.;
+    normal[2] = 1;
     var neg_normal = Vector.neg(normal);
-
 
     switch (type){
         case CAP_TYPE.square:
@@ -615,6 +613,7 @@ function addCap (coord, v, normal, type, isBeginning, context) {
             var nA, nB, uvA, uvB, uvC;
             // first vertex on the lineString
             if (isBeginning) {
+
                 nA = normal;
                 nB = neg_normal;
 
@@ -637,7 +636,6 @@ function addCap (coord, v, normal, type, isBeginning, context) {
                     uvC = [0.5, v];
                 }
             }
-            var normrot = Vector.neg(normal);
             addFan(coord,
                 // extrusion normal
                 nA, zero_vec2, nB,
