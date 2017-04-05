@@ -12,13 +12,13 @@ sources:
         max_zoom: 16
     test:
         type: GeoJSON
-        url: test2.json
+        url: test3.json
 
 styles:
     whiteline:
         base: lines
         texcoords: true
-        blend: overlay
+        blend: add
 
     uvlines:
         base: lines
@@ -47,21 +47,86 @@ layers:
                 # color: white
                 width: 50px
                 order: 2
-                cap: square
-                join: bevel
+                cap: round
+                join: round
+                line_offset: 300
                 # outline:
                 #     color: black
                 #     width: 2px
                 #     order: 1
 
-    roads:
+    transit:
         data: { source: mapzen }
-        # filter: { not: { kind: rail } }
+        filter: { kind: subway }
         draw:
             whiteline:
                 color: [1, 1, 1, .3]
                 # color: white
-                width: 50px
-                order: 2
-                cap: square
-                join: bevel
+                width: 5px
+                order: 1
+                cap: round
+                join: round
+        F:
+            filter: { ref: F }
+            draw:
+                lines:
+                    order: 4
+                    width: 5px
+                    color: orange
+                    line_offset: 200
+        E:
+            filter: { ref: E }
+            draw:
+                lines:
+                    order: 4
+                    width: 5px
+                    color: blue
+                    line_offset: 0
+        D:
+            filter: { ref: D }
+            draw:
+                lines:
+                    order: 4
+                    width: 5px
+                    color: orange
+                    line_offset: 400
+        M:
+            filter: { ref: M }
+            draw:
+                lines:
+                    order: 4
+                    width: 5px
+                    color: orange
+                    line_offset: 200
+        R:
+            filter: { ref: R }
+            draw:
+                lines:
+                    order: 4
+                    width: 5px
+                    color: yellow
+                    line_offset: -200
+        N:
+            filter: { ref: N }
+            draw:
+                lines:
+                    order: 4
+                    width: 5px
+                    color: yellow
+                    line_offset: -200
+        C:
+            filter: { ref: C }
+            draw:
+                lines:
+                    order: 4
+                    width: 5px
+                    color: blue
+                    line_offset: 200
+        seven:
+            filter: { ref: '7' }
+            draw:
+                lines:
+                    order: 4
+                    width: 5px
+                    color: purple
+                    line_offset: 0
