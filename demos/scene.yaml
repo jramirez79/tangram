@@ -49,7 +49,7 @@ layers:
                 order: 2
                 cap: round
                 join: round
-                line_offset: 300
+                offset: 300
                 # outline:
                 #     color: black
                 #     width: 2px
@@ -73,7 +73,7 @@ layers:
                     order: 4
                     width: 5px
                     color: orange
-                    line_offset: 200
+                    offset: 200
         E:
             filter: { ref: E }
             draw:
@@ -81,7 +81,7 @@ layers:
                     order: 4
                     width: 5px
                     color: blue
-                    line_offset: 0
+                    offset: 0
         D:
             filter: { ref: D }
             draw:
@@ -89,7 +89,7 @@ layers:
                     order: 4
                     width: 5px
                     color: orange
-                    line_offset: 400
+                    offset: 400
         M:
             filter: { ref: M }
             draw:
@@ -97,7 +97,7 @@ layers:
                     order: 4
                     width: 5px
                     color: orange
-                    line_offset: 200
+                    offset: 200
         R:
             filter: { ref: R }
             draw:
@@ -105,7 +105,7 @@ layers:
                     order: 4
                     width: 5px
                     color: yellow
-                    line_offset: -200
+                    offset: -200
         N:
             filter: { ref: N }
             draw:
@@ -113,7 +113,7 @@ layers:
                     order: 4
                     width: 5px
                     color: yellow
-                    line_offset: -200
+                    offset: -200
         C:
             filter: { ref: C }
             draw:
@@ -121,7 +121,7 @@ layers:
                     order: 4
                     width: 5px
                     color: blue
-                    line_offset: 200
+                    offset: 200
         seven:
             filter: { ref: '7' }
             draw:
@@ -129,4 +129,4 @@ layers:
                     order: 4
                     width: 5px
                     color: purple
-                    line_offset: 0
+                    offset: 0
