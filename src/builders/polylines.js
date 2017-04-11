@@ -161,8 +161,8 @@ function buildPolyline(line, context, extra_lines){
         }
 
         // Add first pair of points for the line strip
-        addVertex(coordCurr, normNext, normNext, [1, v], context);
-        addVertex(coordCurr, normNext, normNext, [0, v], context, true);
+        addVertex(coordCurr, normNext, [0, 0], [1, v], context);
+        addVertex(coordCurr, normNext, [0, 0], [0, v], context, true);
     }
 
     // INTERMEDIARY POINTS
@@ -180,8 +180,8 @@ function buildPolyline(line, context, extra_lines){
 
         // Remove tile boundaries
         if (remove_tile_edges && outsideTile(coordCurr, coordNext, tile_edge_tolerance)) {
-            addVertex(coordCurr, normNext, normNext, [1, v], context);
-            addVertex(coordCurr, normNext, normNext, [0, v], context, true);
+            addVertex(coordCurr, normNext, [0, 0], [1, v], context);
+            addVertex(coordCurr, normNext, [0, 0], [0, v], context, true);
 
             indexPairs(1, context);
 
@@ -217,8 +217,8 @@ function buildPolyline(line, context, extra_lines){
     }
     else {
         // Finish the line strip
-        addVertex(coordCurr, normPrev, normPrev, [1, v], context);
-        addVertex(coordCurr, normPrev, normPrev, [0, v], context, true);
+        addVertex(coordCurr, normPrev, [0, 0], [1, v], context);
+        addVertex(coordCurr, normPrev, [0, 0], [0, v], context, true);
 
         indexPairs(1, context);
 
