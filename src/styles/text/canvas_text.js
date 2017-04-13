@@ -729,6 +729,33 @@ class MultiLine {
         let words;
         if (typeof text_wrap === 'number') {
             words = str.split(' '); // split words on spaces
+
+            // append
+            // for (let i = words.length - 1; i > 1; i--){
+            //     let word = words[i];
+
+            //     if (isTextRTL(word)){
+            //         let last_char = word[word.length - 1];
+            //         debugger
+            //         if (isTextNeutral(last_char)){
+            //             words[i + 1] = word + ' ' + words[i + 1];
+            //             words.splice(i, 1);
+            //         }
+            //     }
+            // }
+
+            // preprend
+            for (let i = 1; i < words.length; i++){
+                let word = words[i];
+
+                if (isTextRTL(word)){
+                    let last_char = word[word.length - 1];
+                    if (isTextNeutral(last_char)){
+                        words[i - 1] = words[i - 1] + ' ' + word;
+                        words.splice(i-1, 1);
+                    }
+                }
+            }
         }
         else {
             words = [str]; // no max line word wrapping (but new lines will still be in effect)
