@@ -36,7 +36,34 @@ layers:
         draw:
             polygons:
                 color: '#999'
-                order: 0
+                order: 4
+            lines1:
+                style: lines
+                color: [.5, .5, .5]
+                width: 3px
+                order: 5
+                join: round
+            lines2:
+                style: lines
+                color: [.6, .6, .6]
+                width: 5px
+                order: 3
+                join: round
+                offset: -50
+            lines3:
+                style: lines
+                color: [.7, .7, .7]
+                width: 10px
+                order: 2
+                join: round
+                offset: -100
+            lines4:
+                style: lines
+                color: [.75, .75, .75]
+                width: 20px
+                order: 1
+                join: round
+                offset: -200
 
     test:
         data: { source: test, layer: _default }
