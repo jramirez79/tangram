@@ -48,7 +48,7 @@ layers:
                 order: 2
                 cap: round
                 join: round
-                offset: 500
+                offset: 1000
     test2:
         data: { source: test, layer: _default }
         # filter: { not: { kind: rail } }

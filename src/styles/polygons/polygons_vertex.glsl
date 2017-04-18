@@ -119,7 +119,8 @@ void main() {
         // Modify line width before extrusion
         #pragma tangram: width
 
-        position.xy += extrude * width + offset;
+        // position.xy += extrude * width + offset;
+        position.xy += extrude * width;
     #endif
 
     // World coordinates for 3d procedural textures
