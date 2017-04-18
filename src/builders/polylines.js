@@ -102,11 +102,75 @@ export function buildPolylines (lines, width, vertex_data, vertex_template,
     }
 }
 
+// get the perpendicular to a vector
+function perp2D(vector) {
+
+}
+function offsetLine(ring, offset) {
+    var zero = [0, 0];
+    // for (var k = 0; k < rings.length; k++) {
+        // var ring = rings[k];
+        var newRing = [];
+        for (var i = 0; i < ring.length; i++) {
+            // debugger;
+            var a = ring[i - 1];
+            var b = ring[i];
+            var c = ring[i + 1];
+            // var aToB = i === 0 ? zero : (b.sub(a)._unit()._perp();
+            if (i === 0) {
+                var aToB = zero;
+            } else {
+                // aToB = b - a;
+                aToB = [b[0] - a[0], b[1] - a[1]];
+                aToB = Vector.normalize(aToB);
+                // aToB = Vector.perp(aToB, [0,0]);
+                aToB = Vector.perp([0,0], aToB);
+            }
+            // var bToC = i === ring.length - 1 ? zero : c.sub(b)._unit()._perp();
+            if (i === ring.length - 1 ) {
+                console.log('last one')
+                var bToC = zero;
+            } else {
+                // bToC = c - b;
+                bToC = [c[0] - b[0], c[1] - b[1]];
+                bToC = Vector.normalize(bToC);
+                // bToC = Vector.perp(bToC, [0,0]);
+                bToC = Vector.perp([0,0], bToC);
+            }
+            // var extrude = aToB._add(bToC)._unit();
+            // var extrude = aToB + bToC;
+            // if (bToC === zero) debugger;
+            console.log('one more')
+            var extrude = [aToB[0] + bToC[0], aToB[1] + bToC[1]];
+            extrude = Vector.normalize(extrude);
+
+            // var cosHalfAngle = extrude.x * bToC.x + extrude.y * bToC.y;
+            var cosHalfAngle = extrude[0] * bToC[0] + extrude[1] * bToC[1];
+            // extrude._mult(1 / cosHalfAngle);
+            // extrude *= (1 / cosHalfAngle);
+            if (cosHalfAngle !== 0) {
+            extrude = [extrude[0] * 1 / cosHalfAngle, extrude[1] * 1 / cosHalfAngle];
+            }
+            // newRing.push(extrude * offset + b);
+            var newx = extrude[0] * offset + b[0];
+            // debugger;
+            var newy = extrude[1] * offset + b[1];
+            newRing.push([newx, newy]);
+        }
+        // newRings.push(newRing);
+    // }
+    // return newRings;
+    console.log('newring:', newRing)
+    return newRing;
+}
+
 function buildPolyline(line, context, extra_lines){
     // Skip if line is not valid
     if (line.length < 2) {
         return;
     }
+
+    line = offsetLine(line, context.offset);
 
     var coordCurr, coordNext, normPrev, normNext, isCap;
     var {join_type, cap_type, closed_polygon, remove_tile_edges, tile_edge_tolerance, v_scale, miter_len_sq, offset} = context;
@@ -126,6 +190,8 @@ function buildPolyline(line, context, extra_lines){
     // FIRST POINT
     coordCurr = line[0];
     coordNext = line[1];
+    // console.log('old:', oldcoordCurr); // coordCurr is in tilespace: -4096..4096
+    console.log('new:', coordCurr); // coordCurr is in tilespace: -4096..4096
 
     // If first pair of points is redundant, slice and push to the lines array
     if (Vector.isEqual(coordCurr, coordNext)) {

@@ -18,7 +18,7 @@ styles:
     testline:
         base: lines
         texcoords: true
-        blend: add
+        # blend: add
 
     uvlines:
         base: lines
@@ -43,12 +43,23 @@ layers:
         # filter: { not: { kind: rail } }
         draw:
             testline:
-                color: [1, 0, 1, .3]
-                width: 25px
+                color: blue
+                width: 10px
                 order: 2
                 cap: round
                 join: round
-                offset: 300
+                offset: 500
+    test2:
+        data: { source: test, layer: _default }
+        # filter: { not: { kind: rail } }
+        draw:
+            testline:
+                color: white
+                width: 10px
+                order: 2
+                cap: round
+                join: round
+                offset: 0
 
     transit:
         data: { source: mapzen }
