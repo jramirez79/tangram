@@ -179,28 +179,41 @@ function buildPolyline(line, context, extra_lines){
         // radius is the implied radius of the "curve" created by the three points
         // and therefore the distance at which bisections of the three angles will converge
         //
-        //     A------------B
-        //    / \          / \    a = angle
-        //   /   \        / a \   r = radius
-        //      r \    r /     \
-        //         \    /       \
-        //          \  /         \
-        //           \/___________C
+        // use law of cosines to get angle
+        //     -------A------
+        //       \         θ \        θ = angle
+        //          \         \
+        //             \       B
+        //              C \     \
+        //                   \   \
+        //                      \ \
+        // 
+
+        var A = Vector.distance(coordPrev, coordCurr);
+        var C = Vector.distance(coordPrev, coordNext);
+        var B = Vector.distance(coordCurr, coordNext);
+
+        var angle = Math.acos(( A*A + B*B - C*C ) / (2 * A * B));
+        // angle *= 180 / Math.PI; // no
+
+        // then use sin(a) to get radius
+        //     ------A-------                         |
+        //    / \ a      a / \    a = angle/2        /|
+        //   /   \        / a \   r = radius    r  / a|
+        //      r \    r /     B                 /    | B/2
+        //         \    /       \              /    90|
+        //          \  / b     a \           /________|
+        //           \/___________\             
         //                  r    /
         //                      /
 
-        var AB = Vector.distance(coordPrev, coordCurr);
-        var AC = Vector.distance(coordPrev, coordNext);
-        var BC = Vector.distance(coordCurr, coordNext);
-
-        var angle = Math.acos(( AB*AB + AC*AC - BC*BC ) / (2 * AB * AC));
+        // soh cah toa, cos a = adjacent over hypotenuse
+        // cos(a) = (.5 * B)/r
+        // r = (BC * .5)/cos(a)
+        var radius = .5 * B / Math.cos(angle * .5);
         angle *= 180 / Math.PI;
-        // sin a = soh = opposite over hypotenuse
-        var radius = .5 * BC * Math.sin(angle * .5);
         angle = angle ? angle : 0.;
         radius = radius ? radius : 0.;
-
-        console.log(angle, radius)
 
     }
 
