@@ -730,32 +730,30 @@ class MultiLine {
         if (typeof text_wrap === 'number') {
             words = str.split(' '); // split words on spaces
 
-            // append
             // for (let i = words.length - 1; i > 1; i--){
             //     let word = words[i];
 
             //     if (isTextRTL(word)){
             //         let last_char = word[word.length - 1];
-            //         debugger
+
             //         if (isTextNeutral(last_char)){
-            //             words[i + 1] = word + ' ' + words[i + 1];
-            //             words.splice(i, 1);
+
+            //             let length_append = word.length + words[i + 1].length + 1;
+            //             let length_prepend = word.length + words[i - 1].length + 1;
+
+            //             if (length_append < length_prepend){
+            //                 // append
+            //                 words[i + 1] = word + ' ' + words[i + 1];
+            //                 words.splice(i, 1);
+            //             }
+            //             else {
+            //                 // prepend
+            //                 words[i - 1] = words[i - 1] + ' ' + word;
+            //                 words.splice(i-1, 1);
+            //             }
             //         }
             //     }
             // }
-
-            // preprend
-            for (let i = 1; i < words.length; i++){
-                let word = words[i];
-
-                if (isTextRTL(word)){
-                    let last_char = word[word.length - 1];
-                    if (isTextNeutral(last_char)){
-                        words[i - 1] = words[i - 1] + ' ' + word;
-                        words.splice(i-1, 1);
-                    }
-                }
-            }
         }
         else {
             words = [str]; // no max line word wrapping (but new lines will still be in effect)
@@ -785,7 +783,12 @@ class MultiLine {
 
                 // if adding current word would overflow, add a new line instead
                 // first word (i === 0) always appends
-                if (text_wrap && i > 0 && line.exceedsTextwrap(spaced_word)) {
+
+                let cannot_skip = isTextRTL(word) && isTextNeutral(word[word.length - 1]);
+
+                if (cannot_skip) debugger
+
+                if (text_wrap && i > 0 && line.exceedsTextwrap(spaced_word) && !cannot_skip) {
                     line = multiline.advance(line, line_height);
                     if (!line){
                         break;
