@@ -215,7 +215,23 @@ function buildPolyline(line, context, extra_lines){
         angle = angle ? angle : 0.;
         radius = radius ? radius : 0.;
 
+        normPrev = normNext;
+        normNext = Vector.normalize(Vector.perp(coordCurr, coordNext));
+
+        var miterVec = createMiterVec(normPrev, normNext);
+        var isClockwise = (normNext[0] * normPrev[1] - normNext[1] * normPrev[0] > 0);
+        console.log('miterVec:', miterVec, "clockwise?", isClockwise);
+
+
+
     }
+
+    // RESET
+
+    // FIRST POINT
+    coordCurr = line[0];
+    coordNext = line[1];
+    normNext = Vector.normalize(Vector.perp(coordCurr, coordNext));
 
     // add vertices
     v += v_scale * Vector.length(Vector.sub(coordNext, coordCurr));
