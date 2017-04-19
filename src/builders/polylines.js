@@ -166,6 +166,45 @@ function buildPolyline(line, context, extra_lines){
     }
 
     // INTERMEDIARY POINTS
+    // get average angle for each set of consecutive joins in the same direction
+    for (var i = 1; i < line.length - 1; i++) {
+        var prevIndex = i - 1;
+        var currIndex = i;
+        var nextIndex = i + 1;
+        var coordPrev = line[prevIndex];
+        coordCurr = line[currIndex];
+        coordNext = line[nextIndex];
+
+        // calculate angle from last three points with law of cosines -
+        // radius is the implied radius of the "curve" created by the three points
+        // and therefore the distance at which bisections of the three angles will converge
+        //
+        //     A------------B
+        //    / \          / \    a = angle
+        //   /   \        / a \   r = radius
+        //      r \    r /     \
+        //         \    /       \
+        //          \  /         \
+        //           \/___________C
+        //                  r    /
+        //                      /
+
+        var AB = Vector.distance(coordPrev, coordCurr);
+        var AC = Vector.distance(coordPrev, coordNext);
+        var BC = Vector.distance(coordCurr, coordNext);
+
+        var angle = Math.acos(( AB*AB + AC*AC - BC*BC ) / (2 * AB * AC));
+        angle *= 180 / Math.PI;
+        // sin a = soh = opposite over hypotenuse
+        var radius = .5 * BC * Math.sin(angle * .5);
+        angle = angle ? angle : 0.;
+        radius = radius ? radius : 0.;
+
+        console.log(angle, radius)
+
+    }
+
+    // add vertices
     v += v_scale * Vector.length(Vector.sub(coordNext, coordCurr));
     for (var i = 1; i < line.length - 1; i++) {
         var currIndex = i;
@@ -332,7 +371,6 @@ function addMiter (v, coordCurr, normPrev, normNext, miter_len_sq, isBeginning, 
 function addJoin(join_type, v, coordCurr, normPrev, normNext, isBeginning, context) {
     var miterVec = createMiterVec(normPrev, normNext);
     var isClockwise = (normNext[0] * normPrev[1] - normNext[1] * normPrev[0] > 0);
-    var normAvg = normPrev + normNext / 2.;
 
     var normal = normNext;
 
