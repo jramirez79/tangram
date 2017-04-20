@@ -93,7 +93,15 @@ layers:
                 lines:
                     order: 4
                     color: orange
-                    offset: 200
+                    offset: 5px
+                    # offset: function(){return 50 * feature....;}
+        G:
+            filter: { ref: G }
+            draw:
+                lines:
+                    order: 5
+                    color: lime
+                    offset: 5px
         E:
             filter: { ref: E }
             draw:
@@ -107,28 +115,28 @@ layers:
                 lines:
                     order: 4
                     color: orange
-                    offset: 400
+                    offset: 0px
         M:
             filter: { ref: M }
             draw:
                 lines:
                     order: 4
                     color: orange
-                    offset: 200
+                    offset: -5px
         R:
             filter: { ref: R }
             draw:
                 lines:
                     order: 4
                     color: yellow
-                    offset: -200
+                    offset: -10px
         N:
             filter: { ref: N }
             draw:
                 lines:
                     order: 4
                     color: yellow
-                    offset: -200
+                    offset: -5px
         C:
             filter: { ref: C }
             draw:
