@@ -222,7 +222,7 @@ export var Style = {
             return style;
         }
         catch(error) {
-            log('error', 'Style.parseFeature: style parsing error', feature, style, error);
+            log('error', 'Style.parseFeature: style parsing error', feature, style, error.stack);
         }
     },
 
