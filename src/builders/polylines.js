@@ -165,6 +165,9 @@ function buildPolyline(line, context, extra_lines){
         addVertex(coordCurr, normNext, normNext, [0, v], context, true);
     }
 
+    var samedirection, lastdirection;
+    var mitersToAverage = [];
+    var miterVecs = [];
     // INTERMEDIARY POINTS
     // get average angle for each set of consecutive joins in the same direction
     for (var i = 1; i < line.length - 1; i++) {
@@ -175,54 +178,33 @@ function buildPolyline(line, context, extra_lines){
         coordCurr = line[currIndex];
         coordNext = line[nextIndex];
 
-        // calculate angle from last three points with law of cosines -
-        // radius is the implied radius of the "curve" created by the three points
-        // and therefore the distance at which bisections of the three angles will converge
-        //
-        // use law of cosines to get angle
-        //     -------A------
-        //       \         θ \        θ = angle
-        //          \         \
-        //             \       B
-        //              C \     \
-        //                   \   \
-        //                      \ \
-        // 
-
-        var A = Vector.distance(coordPrev, coordCurr);
-        var C = Vector.distance(coordPrev, coordNext);
-        var B = Vector.distance(coordCurr, coordNext);
-
-        var angle = Math.acos(( A*A + B*B - C*C ) / (2 * A * B));
-        // angle *= 180 / Math.PI; // no
-
-        // then use sin(a) to get radius
-        //     ------A-------                         |
-        //    / \ a      a / \    a = angle/2        /|
-        //   /   \        / a \   r = radius    r  / a|
-        //      r \    r /     B                 /    | B/2
-        //         \    /       \              /    90|
-        //          \  / b     a \           /________|
-        //           \/___________\             
-        //                  r    /
-        //                      /
-
-        // soh cah toa, cos a = adjacent over hypotenuse
-        // cos(a) = (.5 * B)/r
-        // r = (BC * .5)/cos(a)
-        var radius = .5 * B / Math.cos(angle * .5);
-        angle *= 180 / Math.PI;
-        angle = angle ? angle : 0.;
-        radius = radius ? radius : 0.;
-
         normPrev = normNext;
         normNext = Vector.normalize(Vector.perp(coordCurr, coordNext));
 
-        var miterVec = createMiterVec(normPrev, normNext);
+        var B = Vector.distance(coordCurr, coordNext);
+
+        var angle = Math.PI - Vector.angleBetween(normPrev, normNext);
+        if (angle > Math.PI ) angle = Math.PI - angle;
+
         var isClockwise = (normNext[0] * normPrev[1] - normNext[1] * normPrev[0] > 0);
-        console.log('miterVec:', miterVec, "clockwise?", isClockwise);
+        if (typeof lastdirection == 'undefined') lastdirection = isClockwise;
+        samedirection = (isClockwise == lastdirection) ? true : false;
+        lastdirection = isClockwise;
 
+        mitersToAverage.push(createMiterVec(normPrev, normNext));
 
+        if (!samedirection || i == line.length - 3 ) {
+            var totals = [0, 0];
+            for (var m = 0; m < mitersToAverage.length; m++) {
+                totals[0] += mitersToAverage[m][0];
+                totals[1] += mitersToAverage[m][1];
+            }
+            var averageMiter = [totals[0]/mitersToAverage.length, totals[1]/mitersToAverage.length];
+
+            for (var m = 0; m < mitersToAverage.length; m++) {
+                miterVecs.push(averageMiter);
+            }
+        }
 
     }
 
@@ -269,7 +251,7 @@ function buildPolyline(line, context, extra_lines){
             addMiter(v, coordCurr, normPrev, normNext, miter_len_sq, false, context);
         }
         else {
-            addJoin(join_type, v, coordCurr, normPrev, normNext, false, context);
+            addJoin(join_type, v, coordCurr, normPrev, miterVecs[i] ? miterVecs[i] : normNext, false, context);
         }
 
         v += v_scale * Vector.length(Vector.sub(coordNext, coordCurr));
@@ -400,12 +382,11 @@ function addMiter (v, coordCurr, normPrev, normNext, miter_len_sq, isBeginning, 
 function addJoin(join_type, v, coordCurr, normPrev, normNext, isBeginning, context) {
     var miterVec = createMiterVec(normPrev, normNext);
     var isClockwise = (normNext[0] * normPrev[1] - normNext[1] * normPrev[0] > 0);
-
     var normal = normNext;
 
     if (isClockwise){
-        addVertex(coordCurr, miterVec, miterVec, [1, v], context);
-        addVertex(coordCurr, normPrev, miterVec, [0, v], context, true);
+        addVertex(coordCurr, normal, normal, [1, v], context);
+        addVertex(coordCurr, normal, normal, [0, v], context, true);
 
         if (!isBeginning) {
             indexPairs(1, context);
@@ -414,7 +395,7 @@ function addJoin(join_type, v, coordCurr, normPrev, normNext, isBeginning, conte
         if (join_type === JOIN_TYPE.bevel) {
             addBevel(coordCurr,
                 // extrude normal
-                Vector.neg(normPrev), miterVec, Vector.neg(normNext),
+                Vector.neg(normal), normal, Vector.neg(normal),
                 // uv coordinates
                 [0, v], [1, v], [0, v],
                 context
@@ -423,25 +404,25 @@ function addJoin(join_type, v, coordCurr, normPrev, normNext, isBeginning, conte
         else if (join_type === JOIN_TYPE.round) {
             addFan(coordCurr,
                 // extrusion vector of first vertex
-                Vector.neg(normPrev),
+                Vector.neg(normal),
                 // controls extrude distance of pivot vertex
-                miterVec,
+                normal,
                 // extrusion vector of last vertex
-                Vector.neg(normNext),
+                Vector.neg(normal),
                 // line normal (unused here)
-                miterVec,
+                normal,
                 // uv coordinates
                 [0, v], [1, v], [0, v],
                 false, context
             );
         }
 
-        addVertex(coordCurr, miterVec, miterVec, [1, v], context);
-        addVertex(coordCurr, normNext, miterVec, [0, v], context, true);
+        addVertex(coordCurr, normal, normal, [1, v], context);
+        addVertex(coordCurr, normal, normal, [0, v], context, true);
     }
     else {
-        addVertex(coordCurr, normPrev, miterVec, [1, v], context);
-        addVertex(coordCurr, miterVec, miterVec, [0, v], context, true);
+        addVertex(coordCurr, normal, normal, [1, v], context);
+        addVertex(coordCurr, normal, normal, [0, v], context, true);
 
         if (!isBeginning) {
             indexPairs(1, context);
@@ -460,19 +441,19 @@ function addJoin(join_type, v, coordCurr, normPrev, normNext, isBeginning, conte
                 // extrusion vector of first vertex
                 normPrev,
                 // extrusion vector of pivot vertex
-                Vector.neg(miterVec),
+                Vector.neg(normal),
                 // extrusion vector of last vertex
-                normNext,
+                normal,
                 // line normal for offset
-                miterVec,
+                normal,
                 // uv coordinates
                 [1, v], [0, v], [1, v],
                 false, context
             );
         }
 
-        addVertex(coordCurr, normNext, miterVec, [1, v], context);
-        addVertex(coordCurr, miterVec, miterVec, [0, v], context, true);
+        addVertex(coordCurr, normal, normal, [1, v], context);
+        addVertex(coordCurr, normal, normal, [0, v], context, true);
     }
 }
 
